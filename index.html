@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CV Generator Pro</title>
+    <meta
+      name="description"
+      content="Build a polished professional CV in the browser and export to PDF."
+    />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Libre+Baskerville:wght@400;700&family=Merriweather:wght@400;700;900&family=Source+Sans+3:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+
+    <link rel="stylesheet" href="style.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.10/pdfmake.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.10/vfs_fonts.min.js"></script>
+  </head>
+
+  <body>
+    <div class="page-shell">
+      <aside class="builder-panel">
+        <div class="panel-head">
+          <h1>CV Generator Pro</h1>
+          <p>Create, customize, and download your CV</p>
+          <p class="panel-credit">
+            <span class="credit-highlight">Developed by Gobinda Ghimire</span>
+            <span class="credit-separator"></span>
+            <a class="credit-highlight" href="mailto:trifliptoggmode7@gmail.com">
+              Contact: trifliptoggmode7@gmail.com
+            </a>
+          </p>
+        </div>
+
+        <section class="panel-section">
+          <h2>Identity</h2>
+          <div class="grid-two">
+            <label>
+              Full Name
+              <input type="text" id="fullName" placeholder="enter name" />
+            </label>
+            <label>
+              Role / Title
+              <input
+                type="text"
+                id="headline"
+                placeholder="Eg:Frontend Developer"
+              />
+            </label>
+          </div>
+
+          <label>
+            Professional Summary
+            <textarea
+              id="summary"
+              rows="6"
+              placeholder="Write a clear summary focused on your strengths and impact."
+            ></textarea>
+          </label>
+
+          <label>
+            Profile Photo
+            <input type="file" id="photoInput" accept="image/*" />
+          </label>
+        </section>
+
+        <section class="panel-section">
+          <h2>Contact</h2>
+          <div class="grid-two">
+            <label>
+              Phone
+              <input type="text" id="phone" placeholder="+977 9861154218" />
+            </label>
+            <label>
+              Gmail / Email
+              <input type="email" id="email" placeholder="name@gmail.com" />
+            </label>
+          </div>
+          <div class="grid-two">
+            <label>
+              Location
+              <input
+                type="text"
+                id="location"
+                placeholder="Bharatpur-6, Indrapuri"
+              />
+            </label>
+            <label>
+              Portfolio Website
+              <input type="text" id="website" placeholder="yourwebsite.com" />
+            </label>
+          </div>
+          <div class="grid-two">
+            <label>
+              LinkedIn
+              <input
+                type="text"
+                id="linkedin"
+                placeholder="linkedin.com/in/yourname"
+              />
+            </label>
+            <label>
+              GitHub
+              <input
+                type="text"
+                id="github"
+                placeholder="github.com/yourname"
+              />
+            </label>
+          </div>
+        </section>
+
+        <section class="panel-section">
+          <div class="section-head-row">
+            <h2>Experience</h2>
+            <button type="button" class="btn small" id="addExperience">
+              Add
+            </button>
+          </div>
+          <div id="experienceList" class="repeat-list"></div>
+        </section>
+
+        <section class="panel-section">
+          <div class="section-head-row">
+            <h2>Education</h2>
+            <button type="button" class="btn small" id="addEducation">Add</button>
+          </div>
+          <div id="educationList" class="repeat-list"></div>
+        </section>
+
+        <section class="panel-section">
+          <div class="section-head-row">
+            <h2>Projects</h2>
+            <button type="button" class="btn small" id="addProject">Add</button>
+          </div>
+          <div id="projectList" class="repeat-list"></div>
+        </section>
+
+        <section class="panel-section">
+          <div class="section-head-row">
+            <h2>Achievements</h2>
+            <button type="button" class="btn small" id="addAchievement">
+              Add
+            </button>
+          </div>
+          <div id="achievementList" class="repeat-list"></div>
+        </section>
+
+        <section class="panel-section">
+          <h2>Tech stacks</h2>
+          <label>
+            (comma or new line separated)
+            <textarea
+              id="skills"
+              rows="5"
+              placeholder="Adobe Photoshop, Figma, HTML, CSS, JavaScript"
+            ></textarea>
+          </label>
+          <label>
+            Languages (comma or new line separated)
+            <textarea
+              id="languages"
+              rows="3"
+              placeholder="Nepali, English, Hindi, Chinese "
+            ></textarea>
+          </label>
+        </section>
+
+        <section class="panel-section">
+          <h2>Style</h2>
+          <div class="grid-two">
+            <label>
+              Click here and select the CV color
+              <input type="color" id="accentColor" value="#0d6e6e" />
+            </label>
+            <label>
+              Font Style
+              <select id="fontStyle">
+                <option value="modern">Modern Serif</option>
+                <option value="clean">Clean Sans</option>
+                <option value="elegant">Elegant Serif</option>
+                <option value="classic">Classic Serif</option>
+              </select>
+            </label>
+          </div>
+        </section>
+
+        <section class="panel-section actions">
+          <button type="button" class="btn primary" id="downloadPdf">
+            Download CV
+          </button>
+        </section>
+      </aside>
+
+      <main class="preview-panel">
+        <div class="preview-toolbar">
+          <span>Live Preview</span>
+        </div>
+
+        <article id="resumePaper" class="resume-paper font-modern">
+          <div id="resumeContent" class="resume-content">
+            <header class="resume-header">
+              <div class="header-copy">
+                <h2 id="outName">Your Name</h2>
+                <p id="outHeadline">Your Professional Title</p>
+                <div id="outContact" class="contact-row"></div>
+              </div>
+              <div class="header-photo-wrap">
+                <img id="outPhoto" alt="Profile" />
+              </div>
+            </header>
+
+            <section class="resume-grid">
+              <div class="col-main">
+                <section id="summarySec" class="resume-section">
+                  <h3>Summary</h3>
+                  <p id="outSummary"></p>
+                </section>
+
+                <section id="experienceSec" class="resume-section">
+                  <h3>Experience</h3>
+                  <div id="outExperience" class="timeline"></div>
+                </section>
+
+                <section id="projectsSec" class="resume-section">
+                  <h3>Projects</h3>
+                  <div id="outProjects" class="timeline"></div>
+                </section>
+
+                <section id="achievementsSec" class="resume-section">
+                  <h3>Achievements</h3>
+                  <div id="outAchievements" class="timeline"></div>
+                </section>
+              </div>
+
+              <div class="col-side">
+                <section id="educationSec" class="resume-section">
+                  <h3>Education</h3>
+                  <div id="outEducation" class="timeline compact"></div>
+                </section>
+
+                <section id="skillsSec" class="resume-section">
+                  <h3>Skills</h3>
+                  <div id="outSkills" class="chip-wrap"></div>
+                </section>
+
+                <section id="languagesSec" class="resume-section">
+                  <h3>Languages</h3>
+                  <div id="outLanguages" class="chip-wrap"></div>
+                </section>
+              </div>
+            </section>
+          </div>
+        </article>
+      </main>
+    </div>
+
+    <script src="script.js"></script>
+  </body>
+</html>
