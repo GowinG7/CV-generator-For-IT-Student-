@@ -811,7 +811,7 @@ function render() {
   setSectionVisibility(refs.skillsSec, hasSkills);
   setSectionVisibility(refs.languagesSec, hasLanguages);
 
-  renderPagedPreview();
+  renderPreviewLayout();
   persistState();
 }
 
@@ -825,6 +825,34 @@ function stripCloneIds(root) {
   }
 
   root.querySelectorAll("[id]").forEach((node) => node.removeAttribute("id"));
+}
+
+function renderContinuousPreview() {
+  const paper = refs.resumePaper;
+  const content = refs.resumeContent;
+
+  if (!paper || !content) {
+    return;
+  }
+
+  paper.classList.remove("paged");
+
+  const pagesWrap = paper.querySelector(".resume-pages");
+  if (pagesWrap) {
+    pagesWrap.remove();
+  }
+}
+
+function renderPreviewLayout() {
+  const shouldPage =
+    document.body.classList.contains("exporting-pdf") ||
+    document.body.classList.contains("printing");
+
+  if (shouldPage) {
+    renderPagedPreview();
+  } else {
+    renderContinuousPreview();
+  }
 }
 
 function renderPagedPreview() {
@@ -1016,12 +1044,12 @@ function renderPagedPreview() {
 
 function preparePrintLayout() {
   document.body.classList.add("printing");
-  renderPagedPreview();
+  renderPreviewLayout();
 }
 
 function cleanupPrintLayout() {
   document.body.classList.remove("printing");
-  renderPagedPreview();
+  renderPreviewLayout();
 }
 
 function clearRepeaters() {
@@ -1164,6 +1192,7 @@ async function downloadPDF() {
     alert("Unable to open print on this browser. Please try another browser.");
   } finally {
     document.body.classList.remove("exporting-pdf");
+    renderPreviewLayout();
     button.disabled = false;
     button.textContent = originalLabel;
   }
@@ -1481,12 +1510,12 @@ if (existing) {
 
 if (document.fonts && document.fonts.ready) {
   document.fonts.ready.then(() => {
-    renderPagedPreview();
+    renderPreviewLayout();
   });
 }
 
 window.addEventListener("resize", () => {
-  renderPagedPreview();
+  renderPreviewLayout();
 });
 window.addEventListener("beforeprint", preparePrintLayout);
 window.addEventListener("afterprint", cleanupPrintLayout);
