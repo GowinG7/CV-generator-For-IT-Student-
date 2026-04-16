@@ -844,6 +844,21 @@ function fitResumeToSinglePage() {
   }
 }
 
+function preparePrintLayout() {
+  document.body.classList.add("printing");
+  fitResumeToSinglePage();
+
+  if (refs.resumeContent) {
+    refs.resumeContent.style.transform = "scale(1)";
+    refs.resumeContent.style.width = "100%";
+  }
+}
+
+function cleanupPrintLayout() {
+  document.body.classList.remove("printing");
+  fitResumeToSinglePage();
+}
+
 function clearRepeaters() {
   refs.experienceList.innerHTML = "";
   refs.educationList.innerHTML = "";
@@ -1269,3 +1284,5 @@ if (existing) {
 }
 
 window.addEventListener("resize", fitResumeToSinglePage);
+window.addEventListener("beforeprint", preparePrintLayout);
+window.addEventListener("afterprint", cleanupPrintLayout);

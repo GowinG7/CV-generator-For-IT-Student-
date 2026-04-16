@@ -405,6 +405,26 @@ body.exporting-pdf .resume-paper {
   box-shadow: none;
 }
 
+body.printing .preview-panel {
+  padding: 0;
+  background: white;
+}
+
+body.printing .resume-paper {
+  width: 210mm;
+  height: 297mm;
+  min-height: 297mm;
+  margin: 0 auto;
+  border-radius: 0;
+  box-shadow: none;
+  animation: none;
+}
+
+body.printing .resume-content {
+  width: 100% !important;
+  transform: none !important;
+}
+
 .timeline {
   display: grid;
   gap: 0.5rem;
