@@ -2,7 +2,6 @@ const STORAGE_KEY = "cv_generator_pro_draft_v1";
 
 const refs = {
   fullName: document.getElementById("fullName"),
-  headline: document.getElementById("headline"),
   summary: document.getElementById("summary"),
   phone: document.getElementById("phone"),
   email: document.getElementById("email"),
@@ -21,7 +20,6 @@ const refs = {
   certificationList: document.getElementById("certificationList"),
   achievementList: document.getElementById("achievementList"),
   outName: document.getElementById("outName"),
-  outHeadline: document.getElementById("outHeadline"),
   outContact: document.getElementById("outContact"),
   outSummary: document.getElementById("outSummary"),
   outPhoto: document.getElementById("outPhoto"),
@@ -345,9 +343,9 @@ function makeProjectItem(data = {}) {
   );
   grid.appendChild(
     createLabeledInput(
-      "Github Link",
+      "GitHub / Site Link",
       "pro-link",
-      "https://github.com/username/project",
+      "github.com/username/project or yoursite.com/project",
       data.link
     )
   );
@@ -493,7 +491,6 @@ function collectCertifications() {
 function getState() {
   return {
     fullName: refs.fullName.value.trim(),
-    headline: refs.headline.value.trim(),
     summary: refs.summary.value.trim(),
     phone: refs.phone.value.trim(),
     email: refs.email.value.trim(),
@@ -594,7 +591,7 @@ function renderContact(state) {
       a.href = contact.href;
       if (contact.href.startsWith("http")) {
         a.target = "_blank";
-        a.rel = "noreferrer";
+        a.rel = "noreferrer noopener";
       }
       a.textContent = `${contact.label}: ${contact.value}`;
       a.title = "Click to copy (Ctrl/Cmd+Click to open link)";
@@ -702,7 +699,7 @@ function renderTimeline(container, items, type) {
       const a = document.createElement("a");
       a.href = item.link.startsWith("http") ? item.link : `https://${item.link}`;
       a.target = "_blank";
-      a.rel = "noreferrer";
+      a.rel = "noreferrer noopener";
       a.textContent = item.link;
       card.appendChild(a);
     }
@@ -777,7 +774,6 @@ function render() {
   refs.resumePaper.classList.add(fontClassMap[state.fontStyle] || "font-modern");
 
   refs.outName.textContent = state.fullName || "Your Name";
-  refs.outHeadline.textContent = state.headline || "Your Professional Title";
   refs.outSummary.textContent = state.summary || "Add a concise professional summary.";
   setSectionVisibility(refs.summarySec, Boolean(state.summary));
 
@@ -815,11 +811,23 @@ function render() {
   setSectionVisibility(refs.skillsSec, hasSkills);
   setSectionVisibility(refs.languagesSec, hasLanguages);
 
-  fitResumeToSinglePage();
+  renderPagedPreview();
   persistState();
 }
 
-function fitResumeToSinglePage() {
+function stripCloneIds(root) {
+  if (!root) {
+    return;
+  }
+
+  if (root.nodeType === Node.ELEMENT_NODE) {
+    root.removeAttribute("id");
+  }
+
+  root.querySelectorAll("[id]").forEach((node) => node.removeAttribute("id"));
+}
+
+function renderPagedPreview() {
   const paper = refs.resumePaper;
   const content = refs.resumeContent;
 
@@ -827,36 +835,193 @@ function fitResumeToSinglePage() {
     return;
   }
 
-  content.style.transform = "scale(1)";
-  content.style.width = "100%";
+  // Ensure we are in paged mode (stacked A4 pages).
+  paper.classList.add("paged");
 
-  const availableHeight = paper.clientHeight;
-  const contentHeight = content.scrollHeight;
+  const existingPages = paper.querySelector(".resume-pages");
+  const pagesWrap = existingPages || document.createElement("div");
+  pagesWrap.className = "resume-pages";
 
-  if (!availableHeight || !contentHeight) {
-    return;
+  if (!existingPages) {
+    paper.insertBefore(pagesWrap, content);
   }
 
-  const scale = Math.min(1, availableHeight / contentHeight);
-  if (scale < 1) {
-    content.style.transform = `scale(${scale})`;
-    content.style.width = `${100 / scale}%`;
+  // Calculate page sizing using the current rendered width.
+  const pageHeightPx = (paper.clientWidth * 297) / 210;
+  const topPadFirstPx = 0;
+  const topPadNextPx = 20;
+  const bottomPadPx = 18;
+
+  // Epsilon avoids phantom extra pages due to fractional layout rounding.
+  const epsilonPx = 3;
+  const totalHeightPx = Math.max(0, Math.ceil(content.scrollHeight) - epsilonPx);
+
+  // Collect breakpoints:
+  // - Safe: ends/starts of blocks (avoid awkward splits, keep link with its item)
+  // - Fallback: inside long items only when needed
+  const contentRect = content.getBoundingClientRect();
+  const safeBreaks = new Set([0, totalHeightPx]);
+  const fallbackBreaks = new Set([totalHeightPx]);
+  const timelineBlocks = [];
+
+  content
+    .querySelectorAll(".resume-section, .timeline-item")
+    .forEach((node) => {
+      const rect = node.getBoundingClientRect();
+      const topOffset = Math.floor(rect.top - contentRect.top);
+      const bottomOffset = Math.ceil(rect.bottom - contentRect.top);
+
+      if (topOffset > 0 && topOffset < totalHeightPx) {
+        safeBreaks.add(topOffset);
+      }
+      if (bottomOffset > 0 && bottomOffset < totalHeightPx) {
+        safeBreaks.add(bottomOffset);
+      }
+
+      if (node.classList && node.classList.contains("timeline-item")) {
+        if (topOffset >= 0 && bottomOffset > topOffset && bottomOffset <= totalHeightPx) {
+          timelineBlocks.push({ top: topOffset, bottom: bottomOffset });
+        }
+      }
+    });
+
+  timelineBlocks.sort((a, b) => a.top - b.top);
+
+  // Keep project links with the item by allowing a break AFTER the link (not before it).
+  content
+    .querySelectorAll(".timeline-item a")
+    .forEach((node) => {
+      const bottomOffset = Math.ceil(node.getBoundingClientRect().bottom - contentRect.top);
+      if (bottomOffset > 0 && bottomOffset < totalHeightPx) {
+        safeBreaks.add(bottomOffset);
+      }
+    });
+
+  // If an item is too tall to fit, allow splitting at bullet boundaries.
+  content
+    .querySelectorAll(".timeline-item li")
+    .forEach((node) => {
+      const topOffset = Math.floor(node.getBoundingClientRect().top - contentRect.top);
+      if (topOffset > 0 && topOffset < totalHeightPx) {
+        fallbackBreaks.add(topOffset);
+      }
+    });
+
+  const sortedSafe = Array.from(safeBreaks).sort((a, b) => a - b);
+  const sortedFallback = Array.from(fallbackBreaks).sort((a, b) => a - b);
+
+  pagesWrap.innerHTML = "";
+
+  let startOffset = 0;
+  let pageIndex = 0;
+  const maxPagesSafety = 50;
+
+  while (startOffset < totalHeightPx && pageIndex < maxPagesSafety) {
+    const topPadPx = pageIndex === 0 ? topPadFirstPx : topPadNextPx;
+    const usablePx = Math.max(1, pageHeightPx - topPadPx - bottomPadPx);
+    const maxEnd = Math.min(totalHeightPx, startOffset + usablePx);
+
+    // Ensure progress even if there are no good breakpoints nearby.
+    const minAdvance = Math.min(140, Math.max(40, Math.floor(usablePx * 0.25)));
+    const minEnd = Math.min(totalHeightPx, startOffset + minAdvance);
+
+    let endOffset = 0;
+
+    for (let i = sortedSafe.length - 1; i >= 0; i -= 1) {
+      const candidate = sortedSafe[i];
+      if (candidate > maxEnd) {
+        continue;
+      }
+      if (candidate < minEnd) {
+        break;
+      }
+      endOffset = candidate;
+      break;
+    }
+
+    if (!endOffset) {
+      for (let i = sortedFallback.length - 1; i >= 0; i -= 1) {
+        const candidate = sortedFallback[i];
+        if (candidate > maxEnd) {
+          continue;
+        }
+        if (candidate < minEnd) {
+          break;
+        }
+        endOffset = candidate;
+        break;
+      }
+    }
+
+    if (!endOffset || endOffset <= startOffset) {
+      endOffset = maxEnd;
+    }
+
+    // Avoid cutting a whole timeline item at the bottom of a page.
+    // If the chosen endOffset lands inside a timeline item (and we aren't already inside it),
+    // push the entire item to the next page.
+    let snapTo = null;
+    for (let i = 0; i < timelineBlocks.length; i += 1) {
+      const block = timelineBlocks[i];
+      if (block.top >= endOffset) {
+        break;
+      }
+
+      const cutsInside = endOffset > block.top && endOffset < block.bottom;
+      const blockStartsOnThisPage = block.top > startOffset;
+      const blockFitsOnPage = block.bottom - block.top <= usablePx + 1;
+
+      if (cutsInside && blockStartsOnThisPage && blockFitsOnPage) {
+        snapTo = block.top;
+      }
+    }
+
+    if (snapTo !== null && snapTo > startOffset) {
+      endOffset = snapTo;
+    }
+
+    const page = document.createElement("div");
+    page.className = "resume-page";
+
+    const viewport = document.createElement("div");
+    viewport.className = "resume-page-viewport";
+    viewport.style.paddingTop = `${topPadPx}px`;
+    viewport.style.paddingBottom = `${bottomPadPx}px`;
+
+    // Clip the slice explicitly to avoid any overlap/repetition across pages.
+    const cutBottomPx = Math.max(0, Math.ceil(maxEnd - endOffset));
+    const windowHeightPx = Math.max(
+      1,
+      Math.floor(pageHeightPx - topPadPx - bottomPadPx - cutBottomPx)
+    );
+
+    const windowEl = document.createElement("div");
+    windowEl.className = "resume-page-window";
+    windowEl.style.height = `${windowHeightPx}px`;
+
+    const clone = content.cloneNode(true);
+    stripCloneIds(clone);
+    clone.classList.add("resume-content-clone");
+    clone.style.transform = `translateY(-${startOffset}px)`;
+
+    windowEl.appendChild(clone);
+    viewport.appendChild(windowEl);
+    page.appendChild(viewport);
+    pagesWrap.appendChild(page);
+
+    startOffset = endOffset;
+    pageIndex += 1;
   }
 }
 
 function preparePrintLayout() {
   document.body.classList.add("printing");
-  fitResumeToSinglePage();
-
-  if (refs.resumeContent) {
-    refs.resumeContent.style.transform = "scale(1)";
-    refs.resumeContent.style.width = "100%";
-  }
+  renderPagedPreview();
 }
 
 function cleanupPrintLayout() {
   document.body.classList.remove("printing");
-  fitResumeToSinglePage();
+  renderPagedPreview();
 }
 
 function clearRepeaters() {
@@ -872,7 +1037,6 @@ function loadState(state) {
 
   try {
     refs.fullName.value = state.fullName || "";
-    refs.headline.value = state.headline || "";
     refs.summary.value = state.summary || "";
     refs.phone.value = state.phone || "";
     refs.email.value = state.email || "";
@@ -950,7 +1114,8 @@ async function downloadPDF() {
       await document.fonts.ready;
     }
 
-    fitResumeToSinglePage();
+    document.body.classList.add("exporting-pdf");
+    renderPagedPreview();
 
     try {
       const pdfBlob = await buildPdfBlobFromPreview();
@@ -998,6 +1163,7 @@ async function downloadPDF() {
 
     alert("Unable to open print on this browser. Please try another browser.");
   } finally {
+    document.body.classList.remove("exporting-pdf");
     button.disabled = false;
     button.textContent = originalLabel;
   }
@@ -1005,31 +1171,58 @@ async function downloadPDF() {
 
 async function buildPdfBlobFromPreview() {
   const pageWidth = 210;
+  const pageHeight = 297;
   const renderScale = Math.min(2, Math.max(1.2, window.devicePixelRatio || 1.5));
 
-  if (window.html2canvas) {
-    try {
-      const canvas = await window.html2canvas(refs.resumePaper, {
+  const pagesWrap = refs.resumePaper
+    ? refs.resumePaper.querySelector(".resume-pages")
+    : null;
+  const pages = pagesWrap
+    ? Array.from(pagesWrap.querySelectorAll(":scope > .resume-page"))
+    : [];
+
+  if (window.html2canvas && pages.length) {
+    const JsPdfCtor = window.jspdf && window.jspdf.jsPDF ? window.jspdf.jsPDF : window.jsPDF;
+    if (!JsPdfCtor) {
+      throw new Error("PDF engine not available");
+    }
+
+    const pdf = new JsPdfCtor("p", "mm", "a4");
+
+    for (let i = 0; i < pages.length; i += 1) {
+      const canvas = await window.html2canvas(pages[i], {
         scale: renderScale,
         useCORS: true,
         backgroundColor: null,
       });
 
-      const imageWidth = pageWidth;
-      const imageHeight = (canvas.height * imageWidth) / canvas.width;
-      const JsPdfCtor = window.jspdf && window.jspdf.jsPDF ? window.jspdf.jsPDF : window.jsPDF;
-
-      if (!JsPdfCtor) {
-        throw new Error("PDF engine not available");
-      }
-
-      const pdf = new JsPdfCtor("p", "mm", "a4");
       const imageData = canvas.toDataURL("image/jpeg", 1.0);
-      pdf.addImage(imageData, "JPEG", 0, 0, imageWidth, imageHeight);
-      return pdf.output("blob");
-    } catch (_canvasError) {
-      // Try html2pdf worker next.
+      if (i > 0) {
+        pdf.addPage();
+      }
+      pdf.addImage(imageData, "JPEG", 0, 0, pageWidth, pageHeight);
     }
+
+    return pdf.output("blob");
+  }
+
+  if (window.html2canvas) {
+    // Fallback: capture whatever is visible inside the paper.
+    const canvas = await window.html2canvas(refs.resumePaper, {
+      scale: renderScale,
+      useCORS: true,
+      backgroundColor: null,
+    });
+
+    const JsPdfCtor = window.jspdf && window.jspdf.jsPDF ? window.jspdf.jsPDF : window.jsPDF;
+    if (!JsPdfCtor) {
+      throw new Error("PDF engine not available");
+    }
+
+    const pdf = new JsPdfCtor("p", "mm", "a4");
+    const imageData = canvas.toDataURL("image/jpeg", 1.0);
+    pdf.addImage(imageData, "JPEG", 0, 0, pageWidth, pageHeight);
+    return pdf.output("blob");
   }
 
   if (window.html2pdf) {
@@ -1039,6 +1232,7 @@ async function buildPdfBlobFromPreview() {
         margin: 0,
         filename: "professional-cv.pdf",
         image: { type: "jpeg", quality: 1 },
+        pagebreak: { mode: ["css", "legacy"] },
         html2canvas: {
           scale: renderScale,
           useCORS: true,
@@ -1068,6 +1262,7 @@ async function exportPdfDirectly() {
       margin: 0,
       filename: "professional-cv.pdf",
       image: { type: "jpeg", quality: 1 },
+      pagebreak: { mode: ["css", "legacy"] },
       html2canvas: {
         scale: renderScale,
         useCORS: true,
@@ -1101,6 +1296,7 @@ async function openPdfDataUriInNewTab() {
     .set({
       margin: 0,
       image: { type: "jpeg", quality: 1 },
+      pagebreak: { mode: ["css", "legacy"] },
       html2canvas: {
         scale: renderScale,
         useCORS: true,
@@ -1283,6 +1479,14 @@ if (existing) {
   loadState(DEFAULT_STATE);
 }
 
-window.addEventListener("resize", fitResumeToSinglePage);
+if (document.fonts && document.fonts.ready) {
+  document.fonts.ready.then(() => {
+    renderPagedPreview();
+  });
+}
+
+window.addEventListener("resize", () => {
+  renderPagedPreview();
+});
 window.addEventListener("beforeprint", preparePrintLayout);
 window.addEventListener("afterprint", cleanupPrintLayout);

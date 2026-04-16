@@ -1,6 +1,7 @@
 :root {
   --accent: #0d6e6e;
   --accent-dark: #0a4f4f;
+  --a4-height: 297mm;
   --ink: #1f242b;
   --muted: #5e6a75;
   --paper: #e8eff1;
@@ -264,24 +265,70 @@ select:focus {
 
 .resume-paper {
   width: 210mm;
-  height: 297mm;
-  min-height: 297mm;
+  min-height: var(--a4-height);
   background: linear-gradient(180deg, var(--paper) 0%, var(--paper-soft) 100%);
   margin: 0 auto;
   color: var(--ink);
   border-radius: 7px;
   box-shadow: var(--shadow);
-  overflow: hidden;
+  overflow: visible;
   transform-origin: top center;
   animation: reveal-paper 420ms ease;
   -webkit-print-color-adjust: exact;
   print-color-adjust: exact;
 }
 
+.resume-paper.paged {
+  background: transparent;
+  border-radius: 0;
+  box-shadow: none;
+  animation: none;
+}
+
+.resume-paper.paged > .resume-content {
+  position: absolute;
+  top: 0;
+  left: -99999px;
+  width: 100%;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.resume-pages {
+  display: grid;
+  gap: 14px;
+}
+
+.resume-page {
+  width: 210mm;
+  height: var(--a4-height);
+  background: color-mix(in srgb, var(--accent) 8%, var(--paper) 92%);
+  border-radius: 7px;
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  position: relative;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+.resume-page-viewport {
+  height: 100%;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.resume-page-window {
+  width: 100%;
+  overflow: hidden;
+}
+
+.resume-content-clone {
+  width: 100%;
+}
+
 .resume-content {
   width: 100%;
   min-height: 100%;
-  transform-origin: top center;
   background: color-mix(in srgb, var(--accent) 8%, var(--paper) 92%);
 }
 
@@ -378,6 +425,8 @@ select:focus {
 
 .resume-section {
   margin-bottom: 0.78rem;
+  break-inside: avoid;
+  page-break-inside: avoid;
 }
 
 .resume-section h3 {
@@ -401,8 +450,20 @@ select:focus {
   margin-bottom: 0;
 }
 
+body.exporting-pdf .resume-pages {
+  gap: 0;
+}
+
+body.exporting-pdf .resume-page {
+  border-radius: 0;
+  box-shadow: none;
+}
+
 body.exporting-pdf .resume-paper {
   box-shadow: none;
+  border-radius: 0;
+  background: transparent;
+  animation: none;
 }
 
 body.printing .preview-panel {
@@ -410,19 +471,22 @@ body.printing .preview-panel {
   background: white;
 }
 
-body.printing .resume-paper {
-  width: 210mm;
-  height: 297mm;
-  min-height: 297mm;
-  margin: 0 auto;
-  border-radius: 0;
-  box-shadow: none;
-  animation: none;
+body.printing .resume-pages {
+  gap: 0;
 }
 
-body.printing .resume-content {
-  width: 100% !important;
-  transform: none !important;
+body.printing .resume-page {
+  border-radius: 0;
+  box-shadow: none;
+}
+
+body.printing .resume-paper {
+  width: 210mm;
+  margin: 0;
+  border-radius: 0;
+  box-shadow: none;
+  background: transparent;
+  animation: none;
 }
 
 .timeline {
@@ -433,6 +497,8 @@ body.printing .resume-content {
 .timeline-item {
   border-left: 2px solid color-mix(in srgb, var(--accent) 62%, white 38%);
   padding-left: 0.58rem;
+  break-inside: avoid;
+  page-break-inside: avoid;
 }
 
 .timeline-head {
@@ -557,6 +623,16 @@ body.printing .resume-content {
   .resume-paper {
     width: min(210mm, calc(100vw - 1.8rem));
   }
+
+  .resume-pages {
+    width: 100%;
+  }
+
+  .resume-page {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 210 / 297;
+  }
 }
 
 @media (max-width: 700px) {
@@ -606,18 +682,36 @@ body.printing .resume-content {
     padding: 0;
   }
 
-  .resume-paper {
+  .resume-pages {
+    gap: 0;
+  }
+
+  .resume-page {
     width: 210mm;
-    height: 297mm;
-    min-height: 297mm;
+    height: var(--a4-height);
     margin: 0;
     border-radius: 0;
     box-shadow: none;
-    animation: none;
+    break-after: page;
+    page-break-after: always;
   }
 
-  .resume-content {
-    width: 100% !important;
-    transform: none !important;
+  .resume-page:last-child {
+    break-after: auto;
+    page-break-after: auto;
+  }
+
+  .resume-paper {
+    width: 210mm;
+    margin: 0;
+    border-radius: 0;
+    box-shadow: none;
+    background: transparent;
+    animation: none;
+    overflow: visible;
+  }
+
+  .resume-paper > .resume-content {
+    display: none;
   }
 }
