@@ -18,6 +18,7 @@ const refs = {
   experienceList: document.getElementById("experienceList"),
   educationList: document.getElementById("educationList"),
   projectList: document.getElementById("projectList"),
+  certificationList: document.getElementById("certificationList"),
   achievementList: document.getElementById("achievementList"),
   outName: document.getElementById("outName"),
   outHeadline: document.getElementById("outHeadline"),
@@ -27,6 +28,7 @@ const refs = {
   outExperience: document.getElementById("outExperience"),
   outEducation: document.getElementById("outEducation"),
   outProjects: document.getElementById("outProjects"),
+  outCertifications: document.getElementById("outCertifications"),
   outAchievements: document.getElementById("outAchievements"),
   outSkills: document.getElementById("outSkills"),
   outLanguages: document.getElementById("outLanguages"),
@@ -34,6 +36,7 @@ const refs = {
   experienceSec: document.getElementById("experienceSec"),
   educationSec: document.getElementById("educationSec"),
   projectsSec: document.getElementById("projectsSec"),
+  certificationsSec: document.getElementById("certificationsSec"),
   achievementsSec: document.getElementById("achievementsSec"),
   skillsSec: document.getElementById("skillsSec"),
   languagesSec: document.getElementById("languagesSec"),
@@ -42,6 +45,7 @@ const refs = {
   addExperience: document.getElementById("addExperience"),
   addEducation: document.getElementById("addEducation"),
   addProject: document.getElementById("addProject"),
+  addCertification: document.getElementById("addCertification"),
   addAchievement: document.getElementById("addAchievement"),
   downloadPdf: document.getElementById("downloadPdf"),
   printView: document.getElementById("printView"),
@@ -56,6 +60,7 @@ const DEFAULT_STATE = {
   experience: [{}],
   education: [{}],
   projects: [{}],
+  certifications: [{}],
   achievements: [{}],
 };
 
@@ -85,6 +90,30 @@ function parseDetails(text) {
     .filter(Boolean);
 }
 
+function getOrdinalSuffix(day) {
+  const mod10 = day % 10;
+  const mod100 = day % 100;
+
+  if (mod10 === 1 && mod100 !== 11) {
+    return "st";
+  }
+  if (mod10 === 2 && mod100 !== 12) {
+    return "nd";
+  }
+  if (mod10 === 3 && mod100 !== 13) {
+    return "rd";
+  }
+
+  return "th";
+}
+
+function formatFullDate(day, monthIndex, year) {
+  const month = new Date(year, monthIndex, day).toLocaleString("en-US", {
+    month: "long",
+  });
+  return `${day}${getOrdinalSuffix(day)} ${month}, ${year}`;
+}
+
 function formatPeriodValue(value) {
   if (!value) {
     return "";
@@ -98,6 +127,38 @@ function formatPeriodValue(value) {
 
   if (/^present$/i.test(raw)) {
     return "Present";
+  }
+
+  const dayMonthYearMatch = raw.match(
+    /^(?<day>\d{1,2})(?:st|nd|rd|th)?\s+(?<month>[A-Za-z]{3,9}),?\s+(?<year>\d{4})$/i
+  );
+  if (dayMonthYearMatch) {
+    const day = Number(dayMonthYearMatch.groups.day);
+    const year = Number(dayMonthYearMatch.groups.year);
+    const parsed = new Date(
+      `${dayMonthYearMatch.groups.month} ${day}, ${dayMonthYearMatch.groups.year}`
+    );
+
+    if (!Number.isNaN(parsed.getTime()) && day >= 1 && day <= 31) {
+      return formatFullDate(day, parsed.getMonth(), year);
+    }
+  }
+
+  const isoDateMatch = raw.match(/^(?<year>\d{4})-(?<month>\d{2})-(?<day>\d{2})$/);
+  if (isoDateMatch) {
+    const year = Number(isoDateMatch.groups.year);
+    const month = Number(isoDateMatch.groups.month) - 1;
+    const day = Number(isoDateMatch.groups.day);
+    const parsed = new Date(year, month, day);
+
+    if (
+      !Number.isNaN(parsed.getTime()) &&
+      parsed.getFullYear() === year &&
+      parsed.getMonth() === month &&
+      parsed.getDate() === day
+    ) {
+      return formatFullDate(day, month, year);
+    }
   }
 
   const monthYearMatch = raw.match(
@@ -209,7 +270,7 @@ function createPeriodFields(data = {}) {
 
   const hint = document.createElement("p");
   hint.className = "field-hint";
-  hint.textContent = "Use a clear format like 4th Jan 2022 - 3rd Jun 2024";
+  hint.textContent = "Use format like 6th February, 2026 and 10th May, 2026";
 
   const wrap = document.createElement("div");
   wrap.appendChild(grid);
@@ -328,6 +389,43 @@ function makeAchievementItem(data = {}) {
   refs.achievementList.appendChild(item);
 }
 
+function makeCertificationItem(data = {}) {
+  const item = create("certification", "div", "repeat-item");
+  const grid = create("", "div", "grid-two");
+
+  grid.appendChild(
+    createLabeledInput(
+      "Certification",
+      "cert-name",
+      "Certification name",
+      data.name
+    )
+  );
+  grid.appendChild(
+    createLabeledInput("Issuer", "cert-issuer", "Issuing organization", data.issuer)
+  );
+
+  item.appendChild(grid);
+  item.appendChild(
+    createLabeledInput(
+      "Date / Year",
+      "cert-date",
+      "Example: 2025 or Jan 2025",
+      data.date || ""
+    )
+  );
+  item.appendChild(
+    createLabeledTextArea(
+      "Details",
+      "cert-details",
+      "Optional details or credential notes",
+      data.details
+    )
+  );
+  item.appendChild(removeButton());
+  refs.certificationList.appendChild(item);
+}
+
 function removeButton() {
   const wrap = create("", "div", "repeat-actions");
   const btn = document.createElement("button");
@@ -381,6 +479,17 @@ function collectAchievements() {
   );
 }
 
+function collectCertifications() {
+  return Array.from(refs.certificationList.querySelectorAll(".repeat-item")).map(
+    (node) => ({
+      name: node.querySelector(".cert-name").value.trim(),
+      issuer: node.querySelector(".cert-issuer").value.trim(),
+      date: node.querySelector(".cert-date").value.trim(),
+      details: node.querySelector(".cert-details").value.trim(),
+    })
+  );
+}
+
 function getState() {
   return {
     fullName: refs.fullName.value.trim(),
@@ -400,6 +509,7 @@ function getState() {
     experience: collectExperience(),
     education: collectEducation(),
     projects: collectProjects(),
+    certifications: collectCertifications(),
     achievements: collectAchievements(),
   };
 }
@@ -563,6 +673,15 @@ function renderTimeline(container, items, type) {
       meta.textContent = item.year || "";
     }
 
+    if (type === "certification") {
+      title.textContent = [item.name, item.issuer].filter(Boolean).join(" - ");
+      meta.textContent = formatPeriodValue(item.date) || "";
+    }
+
+    if (!meta.textContent) {
+      meta.style.display = "none";
+    }
+
     head.appendChild(title);
     head.appendChild(meta);
     card.appendChild(head);
@@ -594,8 +713,33 @@ function renderTimeline(container, items, type) {
   return true;
 }
 
+function renderPlainList(container, list) {
+  container.innerHTML = "";
+
+  if (!list.length) {
+    const empty = document.createElement("p");
+    empty.className = "empty";
+    empty.textContent = "Not provided.";
+    container.appendChild(empty);
+    return false;
+  }
+
+  const ul = document.createElement("ul");
+  ul.className = "plain-list";
+
+  list.forEach((value) => {
+    const li = document.createElement("li");
+    li.textContent = value;
+    ul.appendChild(li);
+  });
+
+  container.appendChild(ul);
+  return true;
+}
+
 function renderChips(container, list) {
   container.innerHTML = "";
+
   if (!list.length) {
     const empty = document.createElement("p");
     empty.className = "empty";
@@ -610,6 +754,7 @@ function renderChips(container, list) {
     chip.textContent = value;
     container.appendChild(chip);
   });
+
   return true;
 }
 
@@ -644,6 +789,11 @@ function render() {
   const hasExp = renderTimeline(refs.outExperience, state.experience, "experience");
   const hasEdu = renderTimeline(refs.outEducation, state.education, "education");
   const hasProjects = renderTimeline(refs.outProjects, state.projects, "project");
+  const hasCertifications = renderTimeline(
+    refs.outCertifications,
+    state.certifications,
+    "certification"
+  );
   const hasAchievements = renderTimeline(
     refs.outAchievements,
     state.achievements,
@@ -653,6 +803,7 @@ function render() {
   setSectionVisibility(refs.experienceSec, hasExp);
   setSectionVisibility(refs.educationSec, hasEdu);
   setSectionVisibility(refs.projectsSec, hasProjects);
+  setSectionVisibility(refs.certificationsSec, hasCertifications);
   setSectionVisibility(refs.achievementsSec, hasAchievements);
 
   const hasSkills = renderChips(refs.outSkills, parseMultiValue(state.skills));
@@ -697,6 +848,7 @@ function clearRepeaters() {
   refs.experienceList.innerHTML = "";
   refs.educationList.innerHTML = "";
   refs.projectList.innerHTML = "";
+  refs.certificationList.innerHTML = "";
   refs.achievementList.innerHTML = "";
 }
 
@@ -729,6 +881,9 @@ function loadState(state) {
     );
     (state.projects && state.projects.length ? state.projects : [{}]).forEach((item) =>
       makeProjectItem(item)
+    );
+    (state.certifications && state.certifications.length ? state.certifications : [{}]).forEach(
+      (item) => makeCertificationItem(item)
     );
     (state.achievements && state.achievements.length ? state.achievements : [{}]).forEach(
       (item) => makeAchievementItem(item)
@@ -773,45 +928,240 @@ async function downloadPDF() {
   const button = refs.downloadPdf;
   button.disabled = true;
   const originalLabel = button.textContent;
-  button.textContent = "Opening Print...";
-
-  const prevTransform = refs.resumeContent.style.transform;
-  const prevWidth = refs.resumeContent.style.width;
-
-  const finish = () => {
-    refs.resumeContent.style.transform = prevTransform;
-    refs.resumeContent.style.width = prevWidth;
-    fitResumeToSinglePage();
-    document.body.classList.remove("exporting-pdf");
-    button.disabled = false;
-    button.textContent = originalLabel;
-  };
+  button.textContent = "Saving PDF...";
 
   try {
     if (document.fonts && document.fonts.ready) {
       await document.fonts.ready;
     }
 
-    document.body.classList.add("exporting-pdf");
     fitResumeToSinglePage();
 
-    // Remove preview scaling to print exact layout with real selectable text and links.
-    refs.resumeContent.style.transform = "none";
-    refs.resumeContent.style.width = "100%";
-
-    window.addEventListener("afterprint", finish, { once: true });
-    window.print();
-
-    // Fallback for browsers that do not reliably fire afterprint.
-    setTimeout(() => {
-      if (button.disabled) {
-        finish();
+    try {
+      const pdfBlob = await buildPdfBlobFromPreview();
+      await savePdfBlob(pdfBlob, "professional-cv.pdf");
+      return;
+    } catch (blobError) {
+      // Fall through to direct save and print alternatives.
+      try {
+        const fallbackBlob = await buildPdfBlobFromPreview();
+        const opened = openBlobInNewTab(fallbackBlob);
+        if (opened) {
+          return;
+        }
+      } catch (_openBlobError) {
+        // Continue to other fallbacks.
       }
-    }, 2000);
+
+      // Keep a reference for debugging in development tools if needed.
+      window.__lastPdfExportError = blobError;
+    }
+
+    if (window.html2pdf) {
+      try {
+        await exportPdfDirectly();
+        return;
+      } catch (_directSaveError) {
+        const openedFromDataUri = await openPdfDataUriInNewTab();
+        if (openedFromDataUri) {
+          return;
+        }
+      }
+    }
+
+    if (window.print) {
+      window.print();
+      return;
+    }
+
+    throw new Error("No export method available");
   } catch (_error) {
-    finish();
-    alert("Unable to open Print dialog. Please try again.");
+    if (window.print) {
+      window.print();
+      return;
+    }
+
+    alert("Unable to open print on this browser. Please try another browser.");
+  } finally {
+    button.disabled = false;
+    button.textContent = originalLabel;
   }
+}
+
+async function buildPdfBlobFromPreview() {
+  const pageWidth = 210;
+  const renderScale = Math.min(2, Math.max(1.2, window.devicePixelRatio || 1.5));
+
+  if (window.html2canvas) {
+    try {
+      const canvas = await window.html2canvas(refs.resumePaper, {
+        scale: renderScale,
+        useCORS: true,
+        backgroundColor: null,
+      });
+
+      const imageWidth = pageWidth;
+      const imageHeight = (canvas.height * imageWidth) / canvas.width;
+      const JsPdfCtor = window.jspdf && window.jspdf.jsPDF ? window.jspdf.jsPDF : window.jsPDF;
+
+      if (!JsPdfCtor) {
+        throw new Error("PDF engine not available");
+      }
+
+      const pdf = new JsPdfCtor("p", "mm", "a4");
+      const imageData = canvas.toDataURL("image/jpeg", 1.0);
+      pdf.addImage(imageData, "JPEG", 0, 0, imageWidth, imageHeight);
+      return pdf.output("blob");
+    } catch (_canvasError) {
+      // Try html2pdf worker next.
+    }
+  }
+
+  if (window.html2pdf) {
+    const worker = window.html2pdf()
+      .from(refs.resumePaper)
+      .set({
+        margin: 0,
+        filename: "professional-cv.pdf",
+        image: { type: "jpeg", quality: 1 },
+        html2canvas: {
+          scale: renderScale,
+          useCORS: true,
+          backgroundColor: null,
+        },
+        jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
+      })
+      .toPdf();
+
+    const pdf = await worker.get("pdf");
+    return pdf.output("blob");
+  }
+
+  throw new Error("No PDF export engine available");
+}
+
+async function exportPdfDirectly() {
+  if (!window.html2pdf) {
+    throw new Error("html2pdf is unavailable");
+  }
+
+  const renderScale = Math.min(2, Math.max(1.2, window.devicePixelRatio || 1.5));
+
+  await window
+    .html2pdf()
+    .set({
+      margin: 0,
+      filename: "professional-cv.pdf",
+      image: { type: "jpeg", quality: 1 },
+      html2canvas: {
+        scale: renderScale,
+        useCORS: true,
+        backgroundColor: null,
+      },
+      jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
+    })
+    .from(refs.resumePaper)
+    .save();
+}
+
+function openBlobInNewTab(blob) {
+  if (!blob) {
+    return false;
+  }
+
+  const url = URL.createObjectURL(blob);
+  const opened = window.open(url, "_blank", "noopener");
+  setTimeout(() => URL.revokeObjectURL(url), 15000);
+  return Boolean(opened);
+}
+
+async function openPdfDataUriInNewTab() {
+  if (!window.html2pdf) {
+    return false;
+  }
+
+  const renderScale = Math.min(2, Math.max(1.2, window.devicePixelRatio || 1.5));
+  const dataUri = await window
+    .html2pdf()
+    .set({
+      margin: 0,
+      image: { type: "jpeg", quality: 1 },
+      html2canvas: {
+        scale: renderScale,
+        useCORS: true,
+        backgroundColor: null,
+      },
+      jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
+    })
+    .from(refs.resumePaper)
+    .outputPdf("datauristring");
+
+  const opened = window.open(dataUri, "_blank", "noopener");
+  return Boolean(opened);
+}
+
+async function savePdfBlob(blob, fileName) {
+  if (!blob) {
+    throw new Error("Missing PDF blob");
+  }
+
+  const canCreateFile = typeof File === "function";
+  const file = canCreateFile
+    ? new File([blob], fileName, { type: "application/pdf" })
+    : null;
+
+  if (window.showSaveFilePicker) {
+    try {
+      const handle = await window.showSaveFilePicker({
+        suggestedName: fileName,
+        types: [
+          {
+            description: "PDF document",
+            accept: { "application/pdf": [".pdf"] },
+          },
+        ],
+      });
+      const writable = await handle.createWritable();
+      await writable.write(file);
+      await writable.close();
+      return;
+    } catch (_error) {
+      // Fall through to the next mobile-friendly option.
+    }
+  }
+
+  if (
+    file &&
+    navigator.canShare &&
+    navigator.canShare({ files: [file] })
+  ) {
+    try {
+      await navigator.share({
+        files: [file],
+        title: fileName,
+        text: "CV PDF",
+      });
+      return;
+    } catch (_error) {
+      // Continue to the download fallback below.
+    }
+  }
+
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = fileName;
+  anchor.rel = "noopener";
+  document.body.appendChild(anchor);
+  anchor.click();
+
+  if (typeof anchor.download === "undefined") {
+    window.open(url, "_blank", "noopener");
+  }
+
+  anchor.remove();
+
+  setTimeout(() => URL.revokeObjectURL(url), 1500);
 }
 
 function bindEvents() {
@@ -827,6 +1177,11 @@ function bindEvents() {
 
   refs.addProject.addEventListener("click", () => {
     makeProjectItem();
+    render();
+  });
+
+  refs.addCertification.addEventListener("click", () => {
+    makeCertificationItem();
     render();
   });
 
@@ -866,6 +1221,7 @@ function bindEvents() {
     refs.experienceList,
     refs.educationList,
     refs.projectList,
+    refs.certificationList,
     refs.achievementList,
   ].forEach((list) => {
     list.addEventListener("click", (event) => {
@@ -889,6 +1245,9 @@ function bindEvents() {
         }
         if (list === refs.achievementList) {
           makeAchievementItem();
+        }
+        if (list === refs.certificationList) {
+          makeCertificationItem();
         }
       }
       render();

@@ -198,7 +198,7 @@ select:focus {
 
 .actions {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: 1fr;
   gap: 0.4rem;
 }
 
@@ -234,6 +234,7 @@ select:focus {
 
 .btn.primary {
   grid-column: 1 / -1;
+  background: linear-gradient(145deg, #175f8a, #0f4668);
 }
 
 .btn.danger {
@@ -370,15 +371,13 @@ select:focus {
   background: #e5ecef;
 }
 
-.resume-grid {
-  display: grid;
-  grid-template-columns: 1.55fr 1fr;
-  gap: 0.8rem;
-  padding: 0.9rem 1.05rem 1rem;
+.resume-column {
+  display: block;
+  padding: 0.95rem 1.1rem 1rem;
 }
 
 .resume-section {
-  margin-bottom: 0.7rem;
+  margin-bottom: 0.78rem;
 }
 
 .resume-section h3 {
@@ -398,49 +397,58 @@ select:focus {
   line-height: 1.55;
 }
 
+.resume-section:last-child {
+  margin-bottom: 0;
+}
+
 body.exporting-pdf .resume-paper {
   box-shadow: none;
 }
 
 .timeline {
   display: grid;
-  gap: 0.45rem;
+  gap: 0.5rem;
 }
 
 .timeline-item {
   border-left: 2px solid color-mix(in srgb, var(--accent) 62%, white 38%);
-  padding-left: 0.55rem;
+  padding-left: 0.58rem;
 }
 
 .timeline-head {
   display: flex;
-  justify-content: space-between;
-  gap: 0.4rem;
+  gap: 0.62rem;
   align-items: baseline;
+  flex-wrap: wrap;
   margin-bottom: 0.2rem;
+  padding-right: 0;
 }
 
 .timeline-title {
   margin: 0;
   font-size: 0.84rem;
   font-weight: 700;
+  line-height: 1.32;
 }
 
 .timeline-meta {
   margin: 0;
   font-size: 0.73rem;
   color: #5b6771;
+  font-weight: 600;
+  text-align: left;
+  white-space: nowrap;
 }
 
 .timeline-item ul {
-  margin: 0.2rem 0 0;
-  padding-left: 1.1rem;
+  margin: 0.28rem 0 0;
+  padding-left: 1.05rem;
 }
 
 .timeline-item li {
-  font-size: 0.78rem;
+  font-size: 0.79rem;
   color: #303a45;
-  margin-bottom: 0.2rem;
+  margin-bottom: 0.16rem;
 }
 
 .timeline-item a {
@@ -448,35 +456,45 @@ body.exporting-pdf .resume-paper {
   text-decoration: none;
   font-size: 0.75rem;
   word-break: break-all;
+  display: inline-block;
+  margin-top: 0.24rem;
+  margin-left: 0.95rem;
+}
+
+.plain-list {
+  margin: 0;
+  padding-left: 1.1rem;
+}
+
+.plain-list li {
+  font-size: 0.8rem;
+  color: #2f3942;
+  margin-bottom: 0.16rem;
+  line-height: 1.45;
+}
+
+.plain-list li:last-child {
+  margin-bottom: 0;
 }
 
 .chip-wrap {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.32rem;
+  gap: 0.36rem;
 }
 
 .chip {
-  background: color-mix(in srgb, var(--accent) 18%, white 82%);
-  border: 1px solid color-mix(in srgb, var(--accent) 32%, white 68%);
-  color: #1f3030;
-  font-size: 0.75rem;
-  padding: 0.23rem 0.47rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 1.35rem;
+  padding: 0.2rem 0.52rem;
   border-radius: 999px;
-}
-
-#outLanguages {
-  display: block;
-}
-
-#outLanguages .chip {
-  display: block;
-  width: fit-content;
-  margin-bottom: 0.3rem;
-}
-
-#outLanguages .chip:last-child {
-  margin-bottom: 0;
+  border: 1px solid color-mix(in srgb, var(--accent) 34%, white 66%);
+  background: color-mix(in srgb, var(--accent) 17%, white 83%);
+  color: #21333b;
+  font-size: 0.76rem;
+  line-height: 1.2;
 }
 
 .empty {
@@ -532,11 +550,6 @@ body.exporting-pdf .resume-paper {
     grid-template-columns: 1fr;
   }
 
-  .resume-grid {
-    grid-template-columns: 1fr;
-    gap: 0.5rem;
-  }
-
   .resume-header {
     grid-template-columns: 1fr;
   }
@@ -544,6 +557,18 @@ body.exporting-pdf .resume-paper {
   .header-photo-wrap {
     width: 80px;
     height: 80px;
+  }
+
+  .timeline-head {
+    gap: 0.52rem;
+    align-items: baseline;
+    margin-bottom: 0.2rem;
+    padding-right: 0;
+  }
+
+  .timeline-meta {
+    text-align: left;
+    white-space: nowrap;
   }
 }
 

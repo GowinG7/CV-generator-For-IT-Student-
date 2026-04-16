@@ -18,8 +18,6 @@
 
     <link rel="stylesheet" href="style.css" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.10/pdfmake.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.10/vfs_fonts.min.js"></script>
   </head>
 
   <body>
@@ -117,16 +115,6 @@
 
         <section class="panel-section">
           <div class="section-head-row">
-            <h2>Experience</h2>
-            <button type="button" class="btn small" id="addExperience">
-              Add
-            </button>
-          </div>
-          <div id="experienceList" class="repeat-list"></div>
-        </section>
-
-        <section class="panel-section">
-          <div class="section-head-row">
             <h2>Education</h2>
             <button type="button" class="btn small" id="addEducation">Add</button>
           </div>
@@ -134,25 +122,7 @@
         </section>
 
         <section class="panel-section">
-          <div class="section-head-row">
-            <h2>Projects</h2>
-            <button type="button" class="btn small" id="addProject">Add</button>
-          </div>
-          <div id="projectList" class="repeat-list"></div>
-        </section>
-
-        <section class="panel-section">
-          <div class="section-head-row">
-            <h2>Achievements</h2>
-            <button type="button" class="btn small" id="addAchievement">
-              Add
-            </button>
-          </div>
-          <div id="achievementList" class="repeat-list"></div>
-        </section>
-
-        <section class="panel-section">
-          <h2>Tech stacks</h2>
+          <h2>Tech Stacks:</h2>
           <label>
             (comma or new line separated)
             <textarea
@@ -169,6 +139,42 @@
               placeholder="Nepali, English, Hindi, Chinese "
             ></textarea>
           </label>
+        </section>
+
+        <section class="panel-section">
+          <div class="section-head-row">
+            <h2>Projects</h2>
+            <button type="button" class="btn small" id="addProject">Add</button>
+          </div>
+          <div id="projectList" class="repeat-list"></div>
+        </section>
+
+        <section class="panel-section">
+          <div class="section-head-row">
+            <h2>Experience / Internship</h2>
+            <button type="button" class="btn small" id="addExperience">
+              Add
+            </button>
+          </div>
+          <div id="experienceList" class="repeat-list"></div>
+        </section>
+
+        <section class="panel-section">
+          <div class="section-head-row">
+            <h2>Certifications</h2>
+            <button type="button" class="btn small" id="addCertification">Add</button>
+          </div>
+          <div id="certificationList" class="repeat-list"></div>
+        </section>
+
+        <section class="panel-section">
+          <div class="section-head-row">
+            <h2>Achievements</h2>
+            <button type="button" class="btn small" id="addAchievement">
+              Add
+            </button>
+          </div>
+          <div id="achievementList" class="repeat-list"></div>
         </section>
 
         <section class="panel-section">
@@ -192,7 +198,7 @@
 
         <section class="panel-section actions">
           <button type="button" class="btn primary" id="downloadPdf">
-            Download CV
+            Save PDF
           </button>
         </section>
       </aside>
@@ -215,46 +221,47 @@
               </div>
             </header>
 
-            <section class="resume-grid">
-              <div class="col-main">
-                <section id="summarySec" class="resume-section">
-                  <h3>Summary</h3>
-                  <p id="outSummary"></p>
-                </section>
+            <div class="resume-column">
+              <section id="summarySec" class="resume-section">
+                <h3>Professional Summary</h3>
+                <p id="outSummary"></p>
+              </section>
 
-                <section id="experienceSec" class="resume-section">
-                  <h3>Experience</h3>
-                  <div id="outExperience" class="timeline"></div>
-                </section>
+              <section id="educationSec" class="resume-section">
+                <h3>Education</h3>
+                <div id="outEducation" class="timeline"></div>
+              </section>
 
-                <section id="projectsSec" class="resume-section">
-                  <h3>Projects</h3>
-                  <div id="outProjects" class="timeline"></div>
-                </section>
+              <section id="skillsSec" class="resume-section">
+                <h3>Tech Stacks:</h3>
+                <div id="outSkills" class="chip-wrap"></div>
+              </section>
 
-                <section id="achievementsSec" class="resume-section">
-                  <h3>Achievements</h3>
-                  <div id="outAchievements" class="timeline"></div>
-                </section>
-              </div>
+              <section id="projectsSec" class="resume-section">
+                <h3>Projects</h3>
+                <div id="outProjects" class="timeline"></div>
+              </section>
 
-              <div class="col-side">
-                <section id="educationSec" class="resume-section">
-                  <h3>Education</h3>
-                  <div id="outEducation" class="timeline compact"></div>
-                </section>
+              <section id="experienceSec" class="resume-section">
+                <h3>Experience / Internship</h3>
+                <div id="outExperience" class="timeline"></div>
+              </section>
 
-                <section id="skillsSec" class="resume-section">
-                  <h3>Skills</h3>
-                  <div id="outSkills" class="chip-wrap"></div>
-                </section>
+              <section id="certificationsSec" class="resume-section">
+                <h3>Certifications</h3>
+                <div id="outCertifications" class="timeline"></div>
+              </section>
 
-                <section id="languagesSec" class="resume-section">
-                  <h3>Languages</h3>
-                  <div id="outLanguages" class="chip-wrap"></div>
-                </section>
-              </div>
-            </section>
+              <section id="achievementsSec" class="resume-section">
+                <h3>Achievements</h3>
+                <div id="outAchievements" class="timeline"></div>
+              </section>
+
+              <section id="languagesSec" class="resume-section">
+                <h3>Languages</h3>
+                <div id="outLanguages" class="chip-wrap"></div>
+              </section>
+            </div>
           </div>
         </article>
       </main>
